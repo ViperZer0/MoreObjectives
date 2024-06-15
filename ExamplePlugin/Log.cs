@@ -1,6 +1,6 @@
-using BepInEx.Logging;
+﻿using BepInEx.Logging;
 
-namespace CustomLevelObjectivesPlugin
+namespace ExamplePlugin
 {
     internal static class Log
     {
