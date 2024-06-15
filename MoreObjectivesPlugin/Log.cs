@@ -1,6 +1,6 @@
 using BepInEx.Logging;
 
-namespace CustomLevelObjectivesPlugin
+namespace MoreObjectivesPlugin 
 {
     internal static class Log
     {

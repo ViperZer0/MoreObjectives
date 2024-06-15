@@ -5,7 +5,7 @@ using UnityEngine;
 using RoR2.UI;
 using System.Collections.Generic;
 
-namespace CustomLevelObjectivesPlugin;
+namespace MoreObjectivesPlugin;
 
 public class TestObjectiveTracker : ObjectivePanelController.ObjectiveTracker
 {
@@ -21,7 +21,7 @@ public class TestObjectiveTracker : ObjectivePanelController.ObjectiveTracker
 }
 
 [BepInPlugin(PluginGUID, PluginName, PluginVersion)]
-public class CustomLevelObjectivesPlugin : BaseUnityPlugin
+public class MoreObjectivesPlugin : BaseUnityPlugin
 {
     // The Plugin GUID should be a unique ID for this plugin,
     // which is human readable (as it is used in places like the config).
@@ -30,7 +30,7 @@ public class CustomLevelObjectivesPlugin : BaseUnityPlugin
     // Change the PluginAuthor and the PluginName !
     public const string PluginGUID = PluginAuthor + "." + PluginName;
     public const string PluginAuthor = "ViperZer0";
-    public const string PluginName = "CustomLevelObjectives";
+    public const string PluginName = "MoreObjectives";
     public const string PluginVersion = "0.0.0";
 
 
@@ -51,6 +51,10 @@ public class CustomLevelObjectivesPlugin : BaseUnityPlugin
     private void SceneDirector_onPostPopulateSceneServer(SceneDirector director)
     {
         Log.Debug("Stage populated!");
+        foreach(GameObject @object in DirectorCore.spawnedObjects)
+        {
+            Log.Debug($"GameObject tag: {@object.tag}");
+        }
     }
 
     private void onCollectObjectiveSources(CharacterMaster master, List<ObjectivePanelController.ObjectiveSourceDescriptor> output)
