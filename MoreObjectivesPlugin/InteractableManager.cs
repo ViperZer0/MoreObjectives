@@ -58,6 +58,11 @@ public class InteractableManager: MonoBehaviour
     {
         Log.Info("Resetting all tracked interactables");
         ResetAllInteractables();
+        if(IsGoldChestOnStage())
+        {
+            Log.Info("Gold chest detected!");
+            AddTrackedInteractable("goldChest", GameObject.Find("GoldChest"));
+        }
     }
 
     private void OnSpawnCardSpawned(SpawnCard.SpawnResult result)
@@ -66,7 +71,7 @@ public class InteractableManager: MonoBehaviour
         // if the spawned object is one we are tracking, add it.
         if(trackedInteractableData.ContainsKey(result.spawnRequest.spawnCard.name))
         {
-            AddTrackedInteractable(result);
+            AddTrackedInteractable(result.spawnRequest.spawnCard.name, result.spawnedInstance);
         }
     }
 
@@ -106,15 +111,15 @@ public class InteractableManager: MonoBehaviour
         }
     }
 
-    private void AddTrackedInteractable(SpawnCard.SpawnResult result)
+    private void AddTrackedInteractable(string interactableName, GameObject interactableObject)
     {
-        Log.Info($"Adding tracked interactable: {result.spawnRequest.spawnCard.name}");
-        Log.Debug($"Tracking object: {result.spawnedInstance}");
-        InteractableData data = trackedInteractableData[result.spawnRequest.spawnCard.name];
+        Log.Info($"Adding tracked interactable: {interactableName}");
+        Log.Debug($"Tracking object: {interactableObject}");
+        InteractableData data = trackedInteractableData[interactableName];
         data.totalInteractables += 1;
-        data.spawnedInteractables.Add(result.spawnedInstance);
-        trackedInteractableData[result.spawnRequest.spawnCard.name] = data;
-        trackedInteractables.Add(result.spawnedInstance, result.spawnRequest.spawnCard.name);
+        data.spawnedInteractables.Add(interactableObject);
+        trackedInteractableData[interactableName] = data;
+        trackedInteractables.Add(interactableObject, interactableName);
     }
 
     private void RemoveTrackedInteractable(GameObject interactedObject)
@@ -129,6 +134,12 @@ public class InteractableManager: MonoBehaviour
     private bool ObjectiveComplete(InteractableData data)
     {
         return data.interactablesActivated == data.totalInteractables;
+    }
+
+    private bool IsGoldChestOnStage()
+    {
+        GameObject goldChest = GameObject.Find("GoldChest");
+        return goldChest != null;
     }
 
     private class InteractableObjectiveTracker: ObjectivePanelController.ObjectiveTracker

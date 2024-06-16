@@ -8,5 +8,7 @@
         "FREE_CHEST_OBJECTIVE_PLURAL": "Open ({0}/{1}) Crashed Multishops",
         "CHEST_OBJECTIVE": "Open Chest",
         "CHEST_OBJECTIVE_PLURAL": "Open ({0}/{1}) Chests",
+        "GOLD_CHEST_OBJECTIVE": "Open Legendary Chest",
+        "GOLD_CHEST_OBJECTIVE_PLURAL": "Open ({0}/{1}) Legendary Chests"
     }
 }
