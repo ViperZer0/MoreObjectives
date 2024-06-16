@@ -46,6 +46,6 @@ public class MoreObjectivesPlugin : BaseUnityPlugin
         interactableManager.RegisterInteractable("iscLockbox", "LOCKBOX_OBJECTIVE");
         interactableManager.RegisterInteractable("iscLockboxVoid","LOCKBOX_VOID_OBJECTIVE");
         interactableManager.RegisterInteractable("iscFreeChest", "FREE_CHEST_OBJECTIVE");
-        interactableManager.RegisterInteractable("iscChest1", "CHEST_OBJECTIVE");
+        //interactableManager.RegisterInteractable("iscChest1", "CHEST_OBJECTIVE");
     }
 }

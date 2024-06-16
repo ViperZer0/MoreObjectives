@@ -62,6 +62,7 @@ public class InteractableManager: MonoBehaviour
 
     private void OnSpawnCardSpawned(SpawnCard.SpawnResult result)
     {
+        Log.Debug($"Spawned: {result.spawnRequest.spawnCard.name}");
         // if the spawned object is one we are tracking, add it.
         if(trackedInteractableData.ContainsKey(result.spawnRequest.spawnCard.name))
         {
