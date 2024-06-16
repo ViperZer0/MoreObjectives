@@ -1,0 +1,12 @@
+{
+    "strings": {
+        "LOCKBOX_OBJECTIVE": "Open Rusty Lockbox",
+        "LOCKBOX_OBJECTIVE_PLURAL": "Open ({0}/{1}) Rusty Lockboxes",
+        "LOCKBOX_VOID_OBJECTIVE": "Open Encrusted Cache",
+        "LOCKBOX_VOID_OBJECTIVE_PLURAL": "Open ({0}/{1}) Encrusted Caches",
+        "FREE_CHEST_OBJECTIVE": "Open Crashed Multishop",
+        "FREE_CHEST_OBJECTIVE_PLURAL": "Open ({0}/{1}) Crashed Multishops",
+        "CHEST_OBJECTIVE": "Open Chest",
+        "CHEST_OBJECTIVE_PLURAL": "Open ({0}/{1}) Chests",
+    }
+}

@@ -7,11 +7,12 @@ using System.Collections.Generic;
 
 namespace MoreObjectivesPlugin;
 
-public class TestObjectiveTracker : ObjectivePanelController.ObjectiveTracker
+public class LockboxObjectiveTracker : ObjectivePanelController.ObjectiveTracker
 {
+
     public override string GenerateString()
     {
-        return "Hewoo :3";
+        return "Open Rusty Lockbox";
     }
 
     public override bool IsDirty()
@@ -20,6 +21,7 @@ public class TestObjectiveTracker : ObjectivePanelController.ObjectiveTracker
     }
 }
 
+[BepInDependency(LanguageAPI.PluginGUID)]
 [BepInPlugin(PluginGUID, PluginName, PluginVersion)]
 public class MoreObjectivesPlugin : BaseUnityPlugin
 {
@@ -33,38 +35,17 @@ public class MoreObjectivesPlugin : BaseUnityPlugin
     public const string PluginName = "MoreObjectives";
     public const string PluginVersion = "0.0.0";
 
+    private InteractableManager interactableManager;
 
     // The Awake() method is run at the very start when the game is initialized.
     public void Awake()
     {
         Log.Init(Logger);
-
-        Log.Debug("CustomLevelObjectives awake!");
-        SceneDirector.onPostPopulateSceneServer += SceneDirector_onPostPopulateSceneServer;
+        Log.Info("MoreObjectives loaded!");
+        interactableManager = gameObject.AddComponent(typeof(InteractableManager)) as InteractableManager;
+        interactableManager.RegisterInteractable("iscLockbox", "LOCKBOX_OBJECTIVE");
+        interactableManager.RegisterInteractable("iscLockboxVoid","LOCKBOX_VOID_OBJECTIVE");
+        interactableManager.RegisterInteractable("iscFreeChest", "FREE_CHEST_OBJECTIVE");
+        interactableManager.RegisterInteractable("iscChest1", "CHEST_OBJECTIVE");
     }
-
-    private void OnEnable()
-    {
-        ObjectivePanelController.collectObjectiveSources += onCollectObjectiveSources;
-    }
-
-    private void SceneDirector_onPostPopulateSceneServer(SceneDirector director)
-    {
-        Log.Debug("Stage populated!");
-        foreach(GameObject @object in DirectorCore.spawnedObjects)
-        {
-            Log.Debug($"GameObject tag: {@object.tag}");
-        }
-    }
-
-    private void onCollectObjectiveSources(CharacterMaster master, List<ObjectivePanelController.ObjectiveSourceDescriptor> output)
-    {
-        output.Add(new ObjectivePanelController.ObjectiveSourceDescriptor
-                {
-                    source = this,
-                    master = master,
-                    objectiveType = typeof(TestObjectiveTracker)
-                });
-    }
-
 }
