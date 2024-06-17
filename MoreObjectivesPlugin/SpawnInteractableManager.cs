@@ -98,6 +98,7 @@ public class SpawnInteractableManager: MonoBehaviour
             else{
                 interactableControllers[interactableName] = ScriptableObject.CreateInstance<InteractableObjectiveController>();
             }
+
             interactableControllers[interactableName].SetObjectiveToken(registeredInteractables[interactableName].objectiveToken);
         }
 
@@ -115,8 +116,10 @@ public class SpawnInteractableManager: MonoBehaviour
     private void OnSpawnCardSpawned(SpawnCard.SpawnResult result)
     {
         string spawncardName = result.spawnRequest.spawnCard.name;
+        Log.Debug($"Spawn card: {spawncardName}");
         if(registeredInteractables.ContainsKey(spawncardName))
         {
+            Log.Debug("WA");
             GameObject interactable = result.spawnedInstance;
             AddTrackedInteractable(spawncardName, interactable);
         }

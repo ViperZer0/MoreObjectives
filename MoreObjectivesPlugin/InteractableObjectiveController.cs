@@ -34,22 +34,33 @@ public class InteractableObjectiveController: ScriptableObject, IInteractableObj
 
     public void OnEnable()
     {
-        GlobalEventManager.OnInteractionsGlobal += OnGlobalInteraction;
+        //GlobalEventManager.OnInteractionsGlobal += OnGlobalInteraction;
         ObjectivePanelController.collectObjectiveSources += OnCollectObjectiveSources;
     }
 
     public void Destroy()
     {
         Log.Info("Destroying InteractableObjectiveController");
-        GlobalEventManager.OnInteractionsGlobal -= OnGlobalInteraction;
+        //GlobalEventManager.OnInteractionsGlobal -= OnGlobalInteraction;
         ObjectivePanelController.collectObjectiveSources -= OnCollectObjectiveSources;
+        foreach(PurchaseInteraction interaction in interactables)
+        {
+            interaction.onPurchase.RemoveListener(OnPurchase);
+        }
         Destroy(this);
     }
 
     public void AddInteractable(GameObject gameObject)
     {
+        PurchaseInteraction interaction = gameObject.GetComponent<PurchaseInteraction>();
+        if(interaction == null)
+        {
+            Log.Error($"Couldn't get PurchaseInteraction component of GameObject {interaction}");
+            return;
+        }
         totalInteractables++;
-        interactables.Add(gameObject);
+        interactables.Add(interaction);
+        interaction.onPurchase.AddListener(OnPurchase);
     }
 
     /// <summary>
@@ -65,13 +76,9 @@ public class InteractableObjectiveController: ScriptableObject, IInteractableObj
         }
     }
 
-    private void OnGlobalInteraction(Interactor interactor, IInteractable interactable, GameObject interactableObject)
+    private void OnPurchase(Interactor interactor)
     {
-        if(interactables.Contains(interactableObject))
-        {
-            interactablesActivated++;
-            interactables.Remove(interactableObject);
-        }
+        interactablesActivated++;
     }
 
     private void OnCollectObjectiveSources(CharacterMaster master, List<ObjectivePanelController.ObjectiveSourceDescriptor> objectiveSourcesList)
@@ -115,6 +122,6 @@ public class InteractableObjectiveController: ScriptableObject, IInteractableObj
     /****STATE*****/
     private int interactablesActivated = 0;
     private int totalInteractables = 0;
-    private List<GameObject> interactables = new();
+    private List<PurchaseInteraction> interactables = new();
     private string objectiveToken;
 }

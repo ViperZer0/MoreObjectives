@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using RoR2;
 using RoR2.UI;
@@ -30,14 +31,14 @@ public class MultishopInteractableObjectiveController: ScriptableObject, IIntera
 
     public void OnEnable()
     {
-        GlobalEventManager.OnInteractionsGlobal += OnGlobalInteraction;
         ObjectivePanelController.collectObjectiveSources += OnCollectObjectiveSources;
+        // Have to hook into MultiShopController.OnPurchase() method.
+        On.RoR2.MultiShopController.OnPurchase += OnPurchase;
     }
 
     public void Destroy()
     {
         Log.Info("Destroying MultishopInteractableObjectiveController");
-        GlobalEventManager.OnInteractionsGlobal -= OnGlobalInteraction;
         ObjectivePanelController.collectObjectiveSources -= OnCollectObjectiveSources;
         Destroy(this);
     }
@@ -47,18 +48,11 @@ public class MultishopInteractableObjectiveController: ScriptableObject, IIntera
         MultiShopController multiShopController = multishop.GetComponent<MultiShopController>();
         if(multiShopController == null)
         {
-            Log.Warning("Attempted to add an interactable that didn't have a MultiShopController component to the MultishopInteractableObjectiveController.");
+            Log.Error("Attempted to add an interactable that didn't have a MultiShopController component to the MultishopInteractableObjectiveController.");
             return;
         }
         totalInteractables++;
-        Log.Debug(multiShopController._terminalGameObjects);
-        Log.Debug(multiShopController.terminalGameObjects.Length);
-        foreach(GameObject terminal in multiShopController._terminalGameObjects)
-        {
-            Log.Debug($"Terminal: {terminal}");
-            terminalToMultishopMap.Add(terminal, multishop);
-            interactableTerminals.Add(terminal);
-        }
+        interactables.Add(multiShopController);
     }
 
     public void SetObjectiveToken(string objectiveToken)
@@ -69,35 +63,17 @@ public class MultishopInteractableObjectiveController: ScriptableObject, IIntera
         }
     }
 
-    private void OnGlobalInteraction(Interactor interactor, IInteractable interactable, GameObject terminal)
+    // Hook into MultiShopController.OnPurchase() method to register when a
+    // multishop terminal has been purchased from one. Then filter it down to
+    // only terminals we are tracking.
+    private void OnPurchase(On.RoR2.MultiShopController.orig_OnPurchase orig, MultiShopController self, Interactor interactor, PurchaseInteraction purchaseInteraction)
     {
-        // If the registered interaction is one with a terminal we are tracking,
-        // handle it.
-        if(interactableTerminals.Contains(terminal))
+        orig(self, interactor, purchaseInteraction);
+        if(interactables.Contains(self))
         {
+            Log.Info("MultiShopController purchase!");
             interactablesActivated++;
-            // Stop tracking the terminal.
-            interactableTerminals.Remove(terminal);
-            // Remove all other terminals that belong to the multishop we are
-            // tracking. (Even if those terminals don't get disabled, we
-            // consider the objective complete)
-            GameObject multishop = terminalToMultishopMap[terminal];
-            Dictionary<GameObject, GameObject> newMap = new();
-            foreach (KeyValuePair<GameObject, GameObject> pair in terminalToMultishopMap)
-            {
-                // Filter out the bad terminals
-                if(pair.Value != multishop)
-                {
-                    newMap.Add(pair.Key, pair.Value);
-                }
-                else 
-                {
-                    interactableTerminals.Remove(pair.Key);
-                }
-            }
-
-            // Swap out old map with new map
-            terminalToMultishopMap = newMap;
+            interactables.Remove(self);
         }
     }
 
@@ -135,7 +111,7 @@ public class MultishopInteractableObjectiveController: ScriptableObject, IIntera
 
         public override bool IsDirty()
         {
-            return ((InteractableObjectiveController)sourceDescriptor.source).InteractablesActivated != interactablesActivated;
+            return ((MultishopInteractableObjectiveController)sourceDescriptor.source).InteractablesActivated != interactablesActivated;
         }
     }
 
@@ -143,6 +119,5 @@ public class MultishopInteractableObjectiveController: ScriptableObject, IIntera
     private int interactablesActivated = 0;
     private int totalInteractables = 0;
     private string objectiveToken;
-    private Dictionary<GameObject, GameObject> terminalToMultishopMap = new();
-    private List<GameObject> interactableTerminals = new();
+    private List<MultiShopController> interactables = new();
 }
