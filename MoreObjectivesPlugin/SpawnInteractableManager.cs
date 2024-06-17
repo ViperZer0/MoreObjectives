@@ -1,6 +1,6 @@
 using System.Collections.Generic;
+using System.Linq;
 using RoR2;
-using RoR2.UI;
 using UnityEngine;
 using System;
 
@@ -11,7 +11,7 @@ namespace MoreObjectivesPlugin;
 /// Captures interactables that are registered and generates objectives for
 /// them.
 /// </summary>
-public class SpawnInteractableManager: MonoBehaviour
+public class SpawnInteractableManager: MonoBehaviour, IObjectiveCollectable
 {
     // Interactables that have been registered. The key is the SpawnCard name:
     // "iscLockbox" for rusty lockboxes, "iscLockboxVoid" for encrusted caches,
@@ -60,7 +60,7 @@ public class SpawnInteractableManager: MonoBehaviour
 
     public void Awake()
     {
-        Log.Info("InteractableManager loaded");
+        Log.Info("SpawnInteractableManager loaded");
     }
 
     public void OnEnable()
@@ -68,7 +68,6 @@ public class SpawnInteractableManager: MonoBehaviour
         SceneDirector.onPrePopulateSceneServer += OnPrePopulateSceneServer;
         SpawnCard.onSpawnedServerGlobal += OnSpawnCardSpawned;
         GlobalEventManager.OnInteractionsGlobal += OnGlobalInteraction;
-        ObjectivePanelController.collectObjectiveSources += OnCollectObjectiveSources;
     }
 
     /// <summary>
@@ -206,95 +205,18 @@ public class SpawnInteractableManager: MonoBehaviour
         }
     }
 
-    /*********OBJECTIVE GENERATION*********/
-
-    private void OnCollectObjectiveSources(CharacterMaster master, List<ObjectivePanelController.ObjectiveSourceDescriptor> output)
+    public IEnumerable<ObjectiveManager.InteractableObjectiveSource> GetObjectives()
     {
-        foreach(string key in trackedInteractableData.Keys)
-        {
-            RegisteredInteractable registration = registeredInteractables[key];
-            DiscoveredInteractables interactableData = trackedInteractableData[key];
-            if(!ObjectiveComplete(interactableData))
-            {
-                output.Add(new ObjectivePanelController.ObjectiveSourceDescriptor
-                        {
-                            source = new ObjectiveSourceDescriptorInteractableSource(registration, interactableData),
-                            master = master,
-                            objectiveType = typeof(InteractableObjectiveTracker),
-                        });
-            }
-        }
-    }
-
-    /// <summary>
-    /// Collects all necessary information into a context that is used to
-    /// generate objective text. It's a little hacky but this is how RoR2 works.
-    /// </summary>
-    private class ObjectiveSourceDescriptorInteractableSource : UnityEngine.Object
-    {
-        public RegisteredInteractable registeredInteractableData;
-        public DiscoveredInteractables discoveredInteractableData;
-
-        public ObjectiveSourceDescriptorInteractableSource(RegisteredInteractable rid, DiscoveredInteractables did)
-        {
-            registeredInteractableData = rid;
-            discoveredInteractableData = did;
-        }
-
-        public override bool Equals(object obj)
-        {
-            if(obj is ObjectiveSourceDescriptorInteractableSource other)
-            {
-                Log.Debug("Checking equality of source descriptor interactable source");
-                Log.Debug(registeredInteractableData.Equals(other.registeredInteractableData));
-                Log.Debug(discoveredInteractableData.Equals(other.discoveredInteractableData));
-                return registeredInteractableData.Equals(other.registeredInteractableData) &&
-                       discoveredInteractableData.Equals(other.discoveredInteractableData);
-            }
-            return false;
-        }
-
-        public override int GetHashCode()
-        {
-            return base.GetHashCode();
-        }
-
-        public override string ToString()
-        {
-            return base.ToString();
-        }
-    }
-
-    /// <summary>
-    /// Class used to generate objective text.
-    /// </summary>
-    private class InteractableObjectiveTracker: ObjectivePanelController.ObjectiveTracker
-    {
-        public override string GenerateString()
-        {
-            // We need to downcast the source descriptor since a regular
-            // ObjectiveSourceDescriptor doesn't include enough information for
-            // us to generate the objective string.
-            ObjectiveSourceDescriptorInteractableSource context = (ObjectiveSourceDescriptorInteractableSource)sourceDescriptor.source;
-            RegisteredInteractable registration = context.registeredInteractableData;
-            DiscoveredInteractables interactableData = context.discoveredInteractableData;
-            // Pluralize objective, and pass in the number of activated
-            // interactables vs the total needed.
-            if(interactableData.totalInteractables > 1)
-            {
-                string objectiveToken = $"{registration.objectiveToken}{Global.PLURAL_SUFFIX}";
-                return Language.GetStringFormatted(objectiveToken, interactableData.interactablesActivated, interactableData.totalInteractables);
-            }
-            // Otherwise we just use the singular objective string.
-            else
-            {
-                return Language.GetString(registration.objectiveToken);
-            }
-        }
-        
-        public override bool IsDirty()
-        {
-            return true;
-        }
+        return trackedInteractableData.Keys.Where((key) => !ObjectiveComplete(trackedInteractableData[key]))
+            .Select((key) => {
+                    RegisteredInteractable registration = registeredInteractables[key];
+                    DiscoveredInteractables interactableData = trackedInteractableData[key];
+                    return new ObjectiveManager.InteractableObjectiveSource {
+                        sourceId = key,
+                        interactablesActivated = interactableData.interactablesActivated,
+                        totalInteractables = interactableData.totalInteractables,
+                        objectiveToken = registration.objectiveToken
+                    };
+                });
     }
 }
