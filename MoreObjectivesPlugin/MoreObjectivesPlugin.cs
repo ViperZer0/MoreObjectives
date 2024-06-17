@@ -32,7 +32,6 @@ public class MoreObjectivesPlugin : BaseUnityPlugin
 
     private SpawnInteractableManager spawnInteractableManager;
     private StageInteractableManager stageInteractableManager;
-    private ObjectiveManager objectiveManager;
 
     // The Awake() method is run at the very start when the game is initialized.
     public void Awake()
@@ -41,13 +40,11 @@ public class MoreObjectivesPlugin : BaseUnityPlugin
         Log.Info("MoreObjectives loaded!");
         spawnInteractableManager = gameObject.AddComponent(typeof(SpawnInteractableManager)) as SpawnInteractableManager;
         stageInteractableManager = gameObject.AddComponent(typeof(StageInteractableManager)) as StageInteractableManager;
-        objectiveManager = gameObject.AddComponent(typeof(ObjectiveManager)) as ObjectiveManager;
 
         Log.Debug(spawnInteractableManager);
-        objectiveManager.RegisterObjectiveCollector(spawnInteractableManager);
 
-        spawnInteractableManager.RegisterDefaultInteractable("iscLockbox", "LOCKBOX_OBJECTIVE");
-        spawnInteractableManager.RegisterDefaultInteractable("iscLockboxVoid","LOCKBOX_VOID_OBJECTIVE");
+        spawnInteractableManager.RegisterInteractable("iscLockbox", "LOCKBOX_OBJECTIVE");
+        spawnInteractableManager.RegisterInteractable("iscLockboxVoid","LOCKBOX_VOID_OBJECTIVE");
         //spawnInteractableManager.RegisterInteractable("iscChest1", "CHEST_OBJECTIVE");
         //stageInteractableManager.RegisterInteractable("GoldChest", "GOLD_CHEST_OBJECTIVE");
     }

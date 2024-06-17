@@ -11,7 +11,7 @@ namespace MoreObjectivesPlugin;
 /// Captures interactables that are registered and generates objectives for
 /// them.
 /// </summary>
-public class SpawnInteractableManager: MonoBehaviour, IObjectiveCollectable
+public class SpawnInteractableManager: MonoBehaviour
 {
     // Interactables that have been registered. The key is the SpawnCard name:
     // "iscLockbox" for rusty lockboxes, "iscLockboxVoid" for encrusted caches,
@@ -19,7 +19,7 @@ public class SpawnInteractableManager: MonoBehaviour, IObjectiveCollectable
 
     // Interactables discovered when each stage is populated. The key is the
     // SpawnCard name (see above).
-    private Dictionary<string, DiscoveredInteractables> trackedInteractableData = new();
+    private Dictionary<string, InteractableObjectiveController> interactableControllers = new();
 
     // Maps each tracked interactable to the spawncard name that created it. 
     private Dictionary<GameObject, string> trackedInteractables = new();
@@ -32,30 +32,6 @@ public class SpawnInteractableManager: MonoBehaviour, IObjectiveCollectable
     {
         // Localization token name used to get the objective string
         public string objectiveToken;
-
-        // Function used to extract the interactable game object from a captured
-        // SpawnResult. For most things like chests this is just
-        // spawnResult.spawnedInstance but for things like multishop terminals
-        // it is not.
-        public Func<SpawnCard.SpawnResult,GameObject> getInteractableObject;
-    }
-
-    /// <summary>
-    /// When a new interactable we're tracking is discovered, this holds the
-    /// reference to it as well as the total count of interactables that have
-    /// been added (of this type) and how many of them have been interacted with 
-    /// </summary>
-    private class DiscoveredInteractables: UnityEngine.Object
-    {
-        // When an interactable has been activated, this is incremented. 
-        // When it equals totalInteractables, the objective is considered
-        // complete.
-        public int interactablesActivated = 0;
-        // Total number of interactables. This should be equal to
-        // spawnedInteractables.Count
-        public int totalInteractables = 0;
-        // The list of interactables discovered.
-        public List<GameObject> spawnedInteractables = new();
     }
 
     public void Awake()
@@ -67,15 +43,14 @@ public class SpawnInteractableManager: MonoBehaviour, IObjectiveCollectable
     {
         SceneDirector.onPrePopulateSceneServer += OnPrePopulateSceneServer;
         SpawnCard.onSpawnedServerGlobal += OnSpawnCardSpawned;
-        GlobalEventManager.OnInteractionsGlobal += OnGlobalInteraction;
     }
 
     /// <summary>
-    /// Registers an interactable to be tracked using some default parameters. 
+    /// Registers an interactable to be tracked.
     /// This will not work if the object the user interacts with is different
     /// than the object that is spawned (e.g multishop terminals). This also
     /// won't work for objects that are not created via SpawnCard (e.g Legendary
-    /// Chests). For multishop terminals <see cref="RegisterUniqueInteractable"/>,
+    /// Chests). 
     /// for legendary chests 
     /// </summary>
     /// <param name="spawncardName">The name of the spawncard asset. For rusty
@@ -83,30 +58,11 @@ public class SpawnInteractableManager: MonoBehaviour, IObjectiveCollectable
     /// "iscLockboxVoid"</param>
     /// <param name="objectiveToken">The name of the objective token (for
     /// retrieving localized objective string)</param>
-    public void RegisterDefaultInteractable(string spawncardName, string objectiveToken)
+    public void RegisterInteractable(string spawncardName, string objectiveToken)
     {
-        RegisterUniqueInteractable(spawncardName, objectiveToken, (result) => result.spawnedInstance);
-    }
-
-    /// <summary>
-    /// Registers an interactable with a custom method for getting the
-    /// interactable object. This is useful if the interactable object is different
-    /// than the one spawned by SpawnCard, which is the case with multishop
-    /// terminals. However, this class still only expects *one* interactable
-    /// object. If you want to have groups of interactables, any of which can
-    /// trigger an objective, <see cref="MultipleInteractableManager/>
-    /// </summary>
-    /// <param name="spawncardName">The name of the spawncard asset.</param>
-    /// <param name="objectiveToken">The name of the objective token.</param>
-    /// <param name="getInteractableObject">The function to extract the
-    /// interactable GameObject from the SpawnCard.SpawnResult.</param>
-    public void RegisterUniqueInteractable(string spawncardName, string objectiveToken, Func<SpawnCard.SpawnResult, GameObject> getInteractableObject)
-    {
-        Log.Info($"Registering interactable {spawncardName}");
         registeredInteractables.Add(spawncardName, new RegisteredInteractable
                 {
                     objectiveToken = objectiveToken,
-                    getInteractableObject = getInteractableObject,
                 });
     }
 
@@ -117,7 +73,7 @@ public class SpawnInteractableManager: MonoBehaviour, IObjectiveCollectable
     private void ResetAllInteractables()
     {
         trackedInteractables = new();
-        trackedInteractableData = new();
+        interactableControllers = new();
     }
 
     /// <summary>
@@ -132,10 +88,10 @@ public class SpawnInteractableManager: MonoBehaviour, IObjectiveCollectable
     {
         Log.Info($"Adding tracked interactable: {interactableName}");
         Log.Debug($"Tracking object: {interactableObject}");
-        DiscoveredInteractables data = trackedInteractableData.ContainsKey(interactableName) ? trackedInteractableData[interactableName] : new DiscoveredInteractables();
-        data.totalInteractables += 1;
-        data.spawnedInteractables.Add(interactableObject);
-        trackedInteractableData[interactableName] = data;
+        InteractableObjectiveController controller = interactableControllers.ContainsKey(interactableName) ? interactableControllers[interactableName] : ScriptableObject.CreateInstance<InteractableObjectiveController>();
+        controller.AddInteractable(interactableObject);
+        string objectiveToken = registeredInteractables[interactableName].objectiveToken;
+        controller.SetObjectiveToken(objectiveToken);
         trackedInteractables.Add(interactableObject, interactableName);
     }
 
@@ -149,31 +105,7 @@ public class SpawnInteractableManager: MonoBehaviour, IObjectiveCollectable
     private void RemoveTrackedInteractable(GameObject interactedObject)
     {
         Log.Info($"Removing tracked interactable: {interactedObject}");
-        string objectName = trackedInteractables[interactedObject];
-        DiscoveredInteractables interactableData = trackedInteractableData[objectName];
-        interactableData.interactablesActivated++;
-        interactableData.spawnedInteractables.Remove(interactedObject);
-    }
-
-    /// <summary>
-    /// Checks whether an objective is complete
-    /// </summary>
-    /// <param name="data">The interactable data</param>
-    /// <returns>True if the objective is complete, false otherwise.</returns>
-    private bool ObjectiveComplete(DiscoveredInteractables data)
-    {
-        return data.interactablesActivated == data.totalInteractables;
-    }
-
-    /// <summary>
-    /// Checks if the legendary chest is on stage. We have to manually search for the
-    /// legendary chest by name.
-    /// </summary>
-    /// <returns>True if the legendary chest is on stage, false otherwise.</returns>
-    private bool IsGoldChestOnStage()
-    {
-        GameObject goldChest = GameObject.Find("GoldChest");
-        return goldChest != null;
+        trackedInteractables.Remove(interactedObject);
     }
 
     /******EVENT HANDLERS*********/
@@ -190,33 +122,8 @@ public class SpawnInteractableManager: MonoBehaviour, IObjectiveCollectable
         // if the spawned object is one we are tracking, add it.
         if(registeredInteractables.ContainsKey(spawncardName))
         {
-            GameObject interactable = registeredInteractables[spawncardName].getInteractableObject(result);
+            GameObject interactable = result.spawnedInstance;
             AddTrackedInteractable(spawncardName, interactable);
         }
-    }
-
-    private void OnGlobalInteraction(Interactor interactor, IInteractable interactable, GameObject interactableObject)
-    {
-        // If the object interacted with is one we're tracking, register that
-        // interaction.
-        if(trackedInteractables.ContainsKey(interactableObject))
-        {
-            RemoveTrackedInteractable(interactableObject);
-        }
-    }
-
-    public IEnumerable<ObjectiveManager.InteractableObjectiveSource> GetObjectives()
-    {
-        return trackedInteractableData.Keys.Where((key) => !ObjectiveComplete(trackedInteractableData[key]))
-            .Select((key) => {
-                    RegisteredInteractable registration = registeredInteractables[key];
-                    DiscoveredInteractables interactableData = trackedInteractableData[key];
-                    return new ObjectiveManager.InteractableObjectiveSource {
-                        sourceId = key,
-                        interactablesActivated = interactableData.interactablesActivated,
-                        totalInteractables = interactableData.totalInteractables,
-                        objectiveToken = registration.objectiveToken
-                    };
-                });
     }
 }
