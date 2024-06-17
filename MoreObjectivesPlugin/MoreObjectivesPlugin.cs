@@ -1,24 +1,19 @@
 ﻿using BepInEx;
 using R2API;
-using RoR2;
-using UnityEngine;
-using RoR2.UI;
-using System.Collections.Generic;
 
 namespace MoreObjectivesPlugin;
 
-public class LockboxObjectiveTracker : ObjectivePanelController.ObjectiveTracker
+/// <summary>
+/// Holds global variable for the plural suffix added to objective tokens 
+/// </summary>
+public static class Global
 {
-
-    public override string GenerateString()
-    {
-        return "Open Rusty Lockbox";
-    }
-
-    public override bool IsDirty()
-    {
-        return true;
-    }
+    // Suffix to append to an objective token if it is plural.
+    // I.e "LOCKBOX_OBJECTIVE" is "Open Rusty Lockbox"
+    // but "LOCKBOX_OBJECTIVE_PLURAL" is "Open (0/3) Rusty Lockboxes".
+    // Plural localization should use {0} for the number of interactables
+    // completed and {1} for the total number.
+    public const string PLURAL_SUFFIX = "_PLURAL";
 }
 
 [BepInDependency(LanguageAPI.PluginGUID)]
@@ -35,18 +30,20 @@ public class MoreObjectivesPlugin : BaseUnityPlugin
     public const string PluginName = "MoreObjectives";
     public const string PluginVersion = "0.0.0";
 
-    private InteractableManager interactableManager;
+    private SpawnInteractableManager spawnInteractableManager;
+    private StageInteractableManager stageInteractableManager;
 
     // The Awake() method is run at the very start when the game is initialized.
     public void Awake()
     {
         Log.Init(Logger);
         Log.Info("MoreObjectives loaded!");
-        interactableManager = gameObject.AddComponent(typeof(InteractableManager)) as InteractableManager;
-        interactableManager.RegisterInteractable("iscLockbox", "LOCKBOX_OBJECTIVE");
-        interactableManager.RegisterInteractable("iscLockboxVoid","LOCKBOX_VOID_OBJECTIVE");
-        interactableManager.RegisterInteractable("iscFreeChest", "FREE_CHEST_OBJECTIVE");
-        interactableManager.RegisterInteractable("goldChest", "GOLD_CHEST_OBJECTIVE");
-        //interactableManager.RegisterInteractable("iscChest1", "CHEST_OBJECTIVE");
+        spawnInteractableManager = gameObject.AddComponent(typeof(SpawnInteractableManager)) as SpawnInteractableManager;
+        stageInteractableManager = gameObject.AddComponent(typeof(StageInteractableManager)) as StageInteractableManager;
+
+        spawnInteractableManager.RegisterDefaultInteractable("iscLockbox", "LOCKBOX_OBJECTIVE");
+        spawnInteractableManager.RegisterDefaultInteractable("iscLockboxVoid","LOCKBOX_VOID_OBJECTIVE");
+        //spawnInteractableManager.RegisterInteractable("iscChest1", "CHEST_OBJECTIVE");
+        stageInteractableManager.RegisterInteractable("GoldChest", "GOLD_CHEST_OBJECTIVE");
     }
 }
