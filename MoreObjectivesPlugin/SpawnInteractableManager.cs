@@ -17,7 +17,7 @@ public class SpawnInteractableManager: MonoBehaviour
 
     // Interactables discovered when each stage is populated. The key is the
     // SpawnCard name (see above).
-    private Dictionary<string, InteractableObjectiveController> interactableControllers = new();
+    private Dictionary<string, IInteractableObjectiveController> interactableControllers = new();
 
     /// <summary>
     /// Holds information about a registered interactable.
@@ -66,7 +66,7 @@ public class SpawnInteractableManager: MonoBehaviour
     /// </summary>
     private void ResetAllInteractables()
     {
-        foreach(InteractableObjectiveController controller in interactableControllers.Values)
+        foreach(IInteractableObjectiveController controller in interactableControllers.Values)
         {
             controller.Destroy();
         }
@@ -89,11 +89,19 @@ public class SpawnInteractableManager: MonoBehaviour
         // objective token.
         if(!interactableControllers.ContainsKey(interactableName))
         {
-            interactableControllers[interactableName] = ScriptableObject.CreateInstance<InteractableObjectiveController>();
+            //TODO: replace this with a factory
+            if(interactableObject.TryGetComponent<MultiShopController>(out _))
+            {
+                Log.Debug("interactableObject had a MultiShopController component!");
+                interactableControllers[interactableName] = ScriptableObject.CreateInstance<MultishopInteractableObjectiveController>();
+            }
+            else{
+                interactableControllers[interactableName] = ScriptableObject.CreateInstance<InteractableObjectiveController>();
+            }
             interactableControllers[interactableName].SetObjectiveToken(registeredInteractables[interactableName].objectiveToken);
         }
 
-        InteractableObjectiveController controller = interactableControllers[interactableName];
+        IInteractableObjectiveController controller = interactableControllers[interactableName];
         controller.AddInteractable(interactableObject);
     }
 

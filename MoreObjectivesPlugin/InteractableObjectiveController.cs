@@ -5,7 +5,11 @@ using UnityEngine;
 
 namespace MoreObjectivesPlugin;
 
-public class InteractableObjectiveController: ScriptableObject
+/// <summary>
+/// Monitors one or more interactable objects and generates an objective for
+/// them until the objects are all interacted with. 
+/// </summary>
+public class InteractableObjectiveController: ScriptableObject, IInteractableObjectiveController
 {
     public int InteractablesActivated {
         get => interactablesActivated;
@@ -49,7 +53,8 @@ public class InteractableObjectiveController: ScriptableObject
     }
 
     /// <summary>
-    /// Sets the objective token. Can only be done once.
+    /// Sets the objective token. Can be called multiple times but can only be
+    /// set once.
     /// </summary>
     /// <param name="objectiveToken">The objective token</param>
     public void SetObjectiveToken(string objectiveToken)
