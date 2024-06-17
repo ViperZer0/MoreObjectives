@@ -1,8 +1,6 @@
 using System.Collections.Generic;
-using System.Linq;
 using RoR2;
 using UnityEngine;
-using System;
 
 namespace MoreObjectivesPlugin;
 
@@ -20,10 +18,6 @@ public class SpawnInteractableManager: MonoBehaviour
     // Interactables discovered when each stage is populated. The key is the
     // SpawnCard name (see above).
     private Dictionary<string, InteractableObjectiveController> interactableControllers = new();
-
-    // Maps each tracked interactable to the spawncard name that created it. 
-    private Dictionary<GameObject, string> trackedInteractables = new();
-
 
     /// <summary>
     /// Holds information about a registered interactable.
@@ -72,7 +66,10 @@ public class SpawnInteractableManager: MonoBehaviour
     /// </summary>
     private void ResetAllInteractables()
     {
-        trackedInteractables = new();
+        foreach(InteractableObjectiveController controller in interactableControllers.Values)
+        {
+            controller.Destroy();
+        }
         interactableControllers = new();
     }
 
@@ -88,24 +85,16 @@ public class SpawnInteractableManager: MonoBehaviour
     {
         Log.Info($"Adding tracked interactable: {interactableName}");
         Log.Debug($"Tracking object: {interactableObject}");
-        InteractableObjectiveController controller = interactableControllers.ContainsKey(interactableName) ? interactableControllers[interactableName] : ScriptableObject.CreateInstance<InteractableObjectiveController>();
-        controller.AddInteractable(interactableObject);
-        string objectiveToken = registeredInteractables[interactableName].objectiveToken;
-        controller.SetObjectiveToken(objectiveToken);
-        trackedInteractables.Add(interactableObject, interactableName);
-    }
+        // If a controller doesn't already exist, create one and set its
+        // objective token.
+        if(!interactableControllers.ContainsKey(interactableName))
+        {
+            interactableControllers[interactableName] = ScriptableObject.CreateInstance<InteractableObjectiveController>();
+            interactableControllers[interactableName].SetObjectiveToken(registeredInteractables[interactableName].objectiveToken);
+        }
 
-    /// <summary>
-    /// Remove a tracked interactable (because it's been interacted with).
-    /// Note that this function doesn't check to see if this is a tracked
-    /// interactable, it's assumed that that check has been done and the object
-    /// we're passing in is a tracked one.
-    /// </summary>
-    /// <param name="interactedObject">The object that was interacted with.</param>
-    private void RemoveTrackedInteractable(GameObject interactedObject)
-    {
-        Log.Info($"Removing tracked interactable: {interactedObject}");
-        trackedInteractables.Remove(interactedObject);
+        InteractableObjectiveController controller = interactableControllers[interactableName];
+        controller.AddInteractable(interactableObject);
     }
 
     /******EVENT HANDLERS*********/
@@ -118,8 +107,6 @@ public class SpawnInteractableManager: MonoBehaviour
     private void OnSpawnCardSpawned(SpawnCard.SpawnResult result)
     {
         string spawncardName = result.spawnRequest.spawnCard.name;
-        Log.Debug($"Spawned: {spawncardName}");
-        // if the spawned object is one we are tracking, add it.
         if(registeredInteractables.ContainsKey(spawncardName))
         {
             GameObject interactable = result.spawnedInstance;

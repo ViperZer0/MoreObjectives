@@ -23,10 +23,23 @@ public class InteractableObjectiveController: ScriptableObject
         get => objectiveToken;
     }
 
+    public void Awake()
+    {
+        Log.Info("InteractableObjectiveController awake!");
+    }
+
     public void OnEnable()
     {
         GlobalEventManager.OnInteractionsGlobal += OnGlobalInteraction;
         ObjectivePanelController.collectObjectiveSources += OnCollectObjectiveSources;
+    }
+
+    public void Destroy()
+    {
+        Log.Info("Destroying InteractableObjectiveController");
+        GlobalEventManager.OnInteractionsGlobal -= OnGlobalInteraction;
+        ObjectivePanelController.collectObjectiveSources -= OnCollectObjectiveSources;
+        Destroy(this);
     }
 
     public void AddInteractable(GameObject gameObject)

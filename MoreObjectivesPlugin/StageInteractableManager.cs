@@ -1,7 +1,5 @@
-using System;
 using System.Collections.Generic;
 using RoR2;
-using RoR2.UI;
 using UnityEngine;
 
 namespace MoreObjectivesPlugin;
@@ -20,26 +18,8 @@ public class StageInteractableManager: MonoBehaviour
         public string objectiveToken;
     }
 
-    // Maps string object names to the tracked interactable status.
-    private Dictionary<string, TrackedInteractable> trackedInteractables = new();
-
-    // The status of a tracked interactable.
-    // Note that since GameObject.Find, the method on which this class relies,
-    // only returns one interactable object, this class will never have multiple
-    // interactables grouped together in an objective.
-    private struct TrackedInteractable {
-        public GameObject trackedObject;
-        public bool interactedWith;
-
-        public TrackedInteractable(GameObject gameObject)
-        {
-            trackedObject = gameObject;
-            interactedWith = false;
-        }
-    }
-
-    // Maps gameobjects to the string keys that define them.
-    private Dictionary<GameObject, string> interactableLookup = new();
+    // Maps string object names to the controller that monitors them.
+    private Dictionary<string, InteractableObjectiveController> trackedInteractables = new();
 
     public void RegisterInteractable(string gameobjectName, string objectiveToken)
     {
@@ -51,34 +31,33 @@ public class StageInteractableManager: MonoBehaviour
     public void OnEnable()
     {
         SceneDirector.onPrePopulateSceneServer += OnStageLoaded;
-        GlobalEventManager.OnInteractionsGlobal += OnGlobalInteraction;
-        ObjectivePanelController.collectObjectiveSources += OnCollectObjectiveSources;
     }
 
+    /// <summary>
+    /// Adds a tracked interactable to the controller monitoring it. 
+    /// </summary>
+    /// <param name="objectName">The object name. Doesn't serve any purpose
+    /// other than as a key to group objects together.</param>
+    /// <param name="gameObject">The object to monitor and add an objective for</param>
     private void AddTrackedInteractable(string objectName, GameObject gameObject)
     {
-        trackedInteractables.Add(objectName, new TrackedInteractable(gameObject));
-        interactableLookup.Add(gameObject, objectName);
+        Log.Info($"Adding tracked interactable: {objectName}");
+        Log.Debug($"Tracking object: {gameObject}");
+        InteractableObjectiveController controller = trackedInteractables.ContainsKey(objectName) ? trackedInteractables[objectName] : ScriptableObject.CreateInstance<InteractableObjectiveController>();
+        controller.AddInteractable(gameObject);
+        controller.SetObjectiveToken(registeredInteractables[objectName].objectiveToken);
     }
 
-    private void RemoveTrackedInteractable(GameObject gameObject)
-    {
-        string objectName = interactableLookup[gameObject];
-        TrackedInteractable interactableData = trackedInteractables[objectName];
-        interactableData.interactedWith = true;
-        trackedInteractables[objectName] = interactableData;
-        interactableLookup.Remove(gameObject);
-    }
-
+    /// <summary>
+    /// Resets all monitoring for interactables (i.e when the stage changes)
+    /// </summary>
     private void ResetAllInteractables()
     {
-        interactableLookup = new();
+        foreach(InteractableObjectiveController controller in trackedInteractables.Values)
+        {
+            controller.Destroy();
+        }
         trackedInteractables = new();
-    }
-
-    private bool ObjectiveComplete(TrackedInteractable interactableData)
-    {
-        return interactableData.interactedWith;
     }
 
     /************EVENTS****************/
@@ -96,77 +75,4 @@ public class StageInteractableManager: MonoBehaviour
             }
         }
     }
-
-    private void OnGlobalInteraction(Interactor interactor, IInteractable interactable, GameObject interactableObject)
-    {
-        if(interactableLookup.ContainsKey(interactableObject))
-        {
-            RemoveTrackedInteractable(interactableObject);
-        }
-    }
-
-    /************OBJECTIVE GENERATION**************/
-    private void OnCollectObjectiveSources(CharacterMaster master, List<ObjectivePanelController.ObjectiveSourceDescriptor> output)
-    {
-        foreach(string key in trackedInteractables.Keys)
-        {
-            RegisteredInteractable registration = registeredInteractables[key];
-            TrackedInteractable interactableData = trackedInteractables[key];
-            if(!ObjectiveComplete(interactableData))
-            {
-                output.Add(new ObjectivePanelController.ObjectiveSourceDescriptor
-                        {
-                            source = new ObjectiveSourceDescriptorInteractableSource(registration, interactableData),
-                            master = master,
-                            objectiveType = typeof(InteractableObjectiveTracker),
-                        });
-            }
-        }
-    }
-
-    /// <summary>
-    /// Collects all necessary information into a context that is used to
-    /// generate objective text. It's a little hacky but this is how RoR2 works.
-    /// </summary>
-    private class ObjectiveSourceDescriptorInteractableSource : UnityEngine.Object, IEquatable<ObjectiveSourceDescriptorInteractableSource>
-    {
-        public RegisteredInteractable registeredInteractableData;
-        public TrackedInteractable discoveredInteractableData;
-
-        public ObjectiveSourceDescriptorInteractableSource(RegisteredInteractable rid, TrackedInteractable did)
-        {
-            registeredInteractableData = rid;
-            discoveredInteractableData = did;
-        }
-
-        public bool Equals(ObjectiveSourceDescriptorInteractableSource other)
-        {
-            return registeredInteractableData.Equals(other.registeredInteractableData) &&
-                   discoveredInteractableData.Equals(other.discoveredInteractableData);
-        }
-    }
-
-    /// <summary>
-    /// Class used to generate objective text.
-    /// </summary>
-    private class InteractableObjectiveTracker: ObjectivePanelController.ObjectiveTracker
-    {
-        public override string GenerateString()
-        {
-            // We need to downcast the source descriptor since a regular
-            // ObjectiveSourceDescriptor doesn't include enough information for
-            // us to generate the objective string.
-            ObjectiveSourceDescriptorInteractableSource context = (ObjectiveSourceDescriptorInteractableSource)sourceDescriptor.source;
-            RegisteredInteractable registration = context.registeredInteractableData;
-            TrackedInteractable interactableData = context.discoveredInteractableData;
-            return Language.GetString(registration.objectiveToken);
-        }
-        
-        public override bool IsDirty()
-        {
-            return true;
-        }
-    }
-
-
 }
