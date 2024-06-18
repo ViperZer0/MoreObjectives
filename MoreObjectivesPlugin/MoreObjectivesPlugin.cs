@@ -34,26 +34,6 @@ public class MoreObjectivesPlugin : BaseUnityPlugin
     public const string PluginName = "MoreObjectives";
     public const string PluginVersion = "0.0.0";
 
-    /// <summary>
-    /// Whether or not the rusty lockbox should show up as an objective.
-    /// </summary>
-    public static ConfigEntry<bool> LockboxObjective { get; set;}
-
-    /// <summary>
-    /// Whether or not the encrusted cache should show up as an objective.
-    /// </summary>
-    public static ConfigEntry<bool> LockboxVoidObjective { get; set; }
-
-    /// <summary>
-    /// Whether or not the legendary chest should show up as an objective.
-    /// </summary>
-    public static ConfigEntry<bool> GoldChestObjective { get; set; }
-
-    /// <summary>
-    /// Whether or not the crashed multishop terminal should show up as an
-    /// objective.
-    /// </summary>
-    public static ConfigEntry<bool> FreeChestObjective { get; set; }
 
     // The Awake() method is run at the very start when the game is initialized.
     public void Awake()
@@ -63,18 +43,7 @@ public class MoreObjectivesPlugin : BaseUnityPlugin
         spawnInteractableManager = gameObject.AddComponent(typeof(SpawnInteractableManager)) as SpawnInteractableManager;
         stageInteractableManager = gameObject.AddComponent(typeof(StageInteractableManager)) as StageInteractableManager;
 
-        LockboxObjective = Config.Bind<bool>("Objectives", "Lockbox", true, "Whether or not to show an objective for the rusty lockbox");
-        LockboxVoidObjective = Config.Bind<bool>("Objectives", "LockboxVoid", true, "Whether or not to show an objective for the encrusted cache");
-        GoldChestObjective = Config.Bind<bool>("Objectives", "GoldChest", true, "Whether or not to show an objective for the legendary chest");
-        FreeChestObjective = Config.Bind<bool>("Objectives", "FreeChest", true, "Whether or not to show an objective for the crashed multishop terminal");
-
-        if(RiskOfOptionsWrapper.Enabled)
-        {
-            RiskOfOptionsWrapper.AddBool(LockboxObjective);
-            RiskOfOptionsWrapper.AddBool(LockboxVoidObjective);
-            RiskOfOptionsWrapper.AddBool(GoldChestObjective);
-            RiskOfOptionsWrapper.AddBool(FreeChestObjective);
-        }
+        RegisterOptionsMenu();    
 
         RoR2.Run.onRunStartGlobal += OnRunStart;
     }
@@ -87,21 +56,32 @@ public class MoreObjectivesPlugin : BaseUnityPlugin
     public void OnRunStart(Run run)
     {
         Log.Info("Run started, registering objective trackers");
-        if(LockboxObjective.Value)
+        if(Configuration.LockboxObjective.Value)
         {
             spawnInteractableManager.RegisterInteractable("iscLockbox", "LOCKBOX_OBJECTIVE");
         }
-        if(LockboxVoidObjective.Value)
+        if(Configuration.LockboxVoidObjective.Value)
         {
             spawnInteractableManager.RegisterInteractable("iscLockboxVoid","LOCKBOX_VOID_OBJECTIVE");
         }
-        if(FreeChestObjective.Value)
+        if(Configuration.FreeChestObjective.Value)
         {
             spawnInteractableManager.RegisterInteractable("iscFreeChest", "FREE_CHEST_OBJECTIVE");
         }
-        if(GoldChestObjective.Value)
+        if(Configuration.GoldChestObjective.Value)
         {
             stageInteractableManager.RegisterInteractable("GoldChest", "GOLD_CHEST_OBJECTIVE");
+        }
+    }
+
+    private void RegisterOptionsMenu()
+    {
+        if(RiskOfOptionsWrapper.Enabled)
+        {
+            RiskOfOptionsWrapper.AddBool(Configuration.LockboxObjective);
+            RiskOfOptionsWrapper.AddBool(Configuration.LockboxVoidObjective);
+            RiskOfOptionsWrapper.AddBool(Configuration.GoldChestObjective);
+            RiskOfOptionsWrapper.AddBool(Configuration.FreeChestObjective);
         }
     }
 
