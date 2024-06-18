@@ -1,10 +1,13 @@
 ﻿using BepInEx;
+using BepInEx.Configuration;
 using R2API;
+using R2API.Utils;
+using RoR2;
 
 namespace MoreObjectivesPlugin;
 
 /// <summary>
-/// Holds global variable for the plural suffix added to objective tokens 
+/// Holds global variable for the plural suffix added to objective tokens.
 /// </summary>
 public static class Global
 {
@@ -16,6 +19,7 @@ public static class Global
     public const string PLURAL_SUFFIX = "_PLURAL";
 }
 
+[BepInDependency("com.rune580.riskofoptions", BepInDependency.DependencyFlags.SoftDependency)]
 [BepInDependency(LanguageAPI.PluginGUID)]
 [BepInPlugin(PluginGUID, PluginName, PluginVersion)]
 public class MoreObjectivesPlugin : BaseUnityPlugin
@@ -30,8 +34,26 @@ public class MoreObjectivesPlugin : BaseUnityPlugin
     public const string PluginName = "MoreObjectives";
     public const string PluginVersion = "0.0.0";
 
-    private SpawnInteractableManager spawnInteractableManager;
-    private StageInteractableManager stageInteractableManager;
+    /// <summary>
+    /// Whether or not the rusty lockbox should show up as an objective.
+    /// </summary>
+    public static ConfigEntry<bool> LockboxObjective { get; set;}
+
+    /// <summary>
+    /// Whether or not the encrusted cache should show up as an objective.
+    /// </summary>
+    public static ConfigEntry<bool> LockboxVoidObjective { get; set; }
+
+    /// <summary>
+    /// Whether or not the legendary chest should show up as an objective.
+    /// </summary>
+    public static ConfigEntry<bool> GoldChestObjective { get; set; }
+
+    /// <summary>
+    /// Whether or not the crashed multishop terminal should show up as an
+    /// objective.
+    /// </summary>
+    public static ConfigEntry<bool> FreeChestObjective { get; set; }
 
     // The Awake() method is run at the very start when the game is initialized.
     public void Awake()
@@ -41,12 +63,48 @@ public class MoreObjectivesPlugin : BaseUnityPlugin
         spawnInteractableManager = gameObject.AddComponent(typeof(SpawnInteractableManager)) as SpawnInteractableManager;
         stageInteractableManager = gameObject.AddComponent(typeof(StageInteractableManager)) as StageInteractableManager;
 
-        Log.Debug(spawnInteractableManager);
+        LockboxObjective = Config.Bind<bool>("Objectives", "Lockbox", true, "Whether or not to show an objective for the rusty lockbox");
+        LockboxVoidObjective = Config.Bind<bool>("Objectives", "LockboxVoid", true, "Whether or not to show an objective for the encrusted cache");
+        GoldChestObjective = Config.Bind<bool>("Objectives", "GoldChest", true, "Whether or not to show an objective for the legendary chest");
+        FreeChestObjective = Config.Bind<bool>("Objectives", "FreeChest", true, "Whether or not to show an objective for the crashed multishop terminal");
 
-        spawnInteractableManager.RegisterInteractable("iscLockbox", "LOCKBOX_OBJECTIVE");
-        spawnInteractableManager.RegisterInteractable("iscLockboxVoid","LOCKBOX_VOID_OBJECTIVE");
-        spawnInteractableManager.RegisterInteractable("iscChest1", "CHEST_OBJECTIVE");
-        spawnInteractableManager.RegisterInteractable("iscFreeChest", "FREE_CHEST_OBJECTIVE");
-        //stageInteractableManager.RegisterInteractable("GoldChest", "GOLD_CHEST_OBJECTIVE");
+        if(RiskOfOptionsWrapper.Enabled)
+        {
+            RiskOfOptionsWrapper.AddBool(LockboxObjective);
+            RiskOfOptionsWrapper.AddBool(LockboxVoidObjective);
+            RiskOfOptionsWrapper.AddBool(GoldChestObjective);
+            RiskOfOptionsWrapper.AddBool(FreeChestObjective);
+        }
+
+        RoR2.Run.onRunStartGlobal += OnRunStart;
     }
+
+    /// <summary>
+    /// Register interactables to watch for only once the run starts, in case
+    /// the configuration is changed.
+    /// </summary>
+    /// <param name="run">The RoR2 run</param>
+    public void OnRunStart(Run run)
+    {
+        Log.Info("Run started, registering objective trackers");
+        if(LockboxObjective.Value)
+        {
+            spawnInteractableManager.RegisterInteractable("iscLockbox", "LOCKBOX_OBJECTIVE");
+        }
+        if(LockboxVoidObjective.Value)
+        {
+            spawnInteractableManager.RegisterInteractable("iscLockboxVoid","LOCKBOX_VOID_OBJECTIVE");
+        }
+        if(FreeChestObjective.Value)
+        {
+            spawnInteractableManager.RegisterInteractable("iscFreeChest", "FREE_CHEST_OBJECTIVE");
+        }
+        if(GoldChestObjective.Value)
+        {
+            stageInteractableManager.RegisterInteractable("GoldChest", "GOLD_CHEST_OBJECTIVE");
+        }
+    }
+
+    private SpawnInteractableManager spawnInteractableManager;
+    private StageInteractableManager stageInteractableManager;
 }

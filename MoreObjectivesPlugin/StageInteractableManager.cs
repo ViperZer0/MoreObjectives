@@ -67,10 +67,13 @@ public class StageInteractableManager: MonoBehaviour
         ResetAllInteractables();
         foreach(string objectName in registeredInteractables.Keys)
         {
+            // Note that GameObject.Find() will only ever return one object, so
+            // any objectives generated should only ever have one tracked
+            // interacatble. It's still recommended to include a _PLURAL
+            // language token when localizing however, just in case. 
             GameObject foundObject = GameObject.Find(objectName);
             if(foundObject != null)
             {
-                // We found a tracked object!
                 AddTrackedInteractable(objectName, foundObject);
             }
         }

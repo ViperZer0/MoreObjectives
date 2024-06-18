@@ -116,10 +116,8 @@ public class SpawnInteractableManager: MonoBehaviour
     private void OnSpawnCardSpawned(SpawnCard.SpawnResult result)
     {
         string spawncardName = result.spawnRequest.spawnCard.name;
-        Log.Debug($"Spawn card: {spawncardName}");
         if(registeredInteractables.ContainsKey(spawncardName))
         {
-            Log.Debug("WA");
             GameObject interactable = result.spawnedInstance;
             AddTrackedInteractable(spawncardName, interactable);
         }
