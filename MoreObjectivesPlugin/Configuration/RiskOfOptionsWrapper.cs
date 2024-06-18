@@ -1,6 +1,8 @@
 using System.Runtime.CompilerServices;
 using BepInEx.Configuration;
 
+namespace MoreObjectivesPlugin.Configuration;
+
 public static class RiskOfOptionsWrapper
 {
     private static bool? enabled;

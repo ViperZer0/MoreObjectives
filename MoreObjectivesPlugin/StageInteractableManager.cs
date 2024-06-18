@@ -30,7 +30,7 @@ public class StageInteractableManager: MonoBehaviour
 
     public void OnEnable()
     {
-        SceneDirector.onPrePopulateSceneServer += OnStageLoaded;
+        Stage.onStageStartGlobal += OnStageLoaded;
     }
 
     /// <summary>
@@ -61,7 +61,7 @@ public class StageInteractableManager: MonoBehaviour
     }
 
     /************EVENTS****************/
-    private void OnStageLoaded(SceneDirector director)
+    private void OnStageLoaded(Stage stage)
     {
         Log.Info("Resetting all tracked interactables");
         ResetAllInteractables();

@@ -1,9 +1,11 @@
 using BepInEx.Configuration;
 
+namespace MoreObjectivesPlugin.Configuration;
+
 /// <summary>
 /// Exposes configuration variables for what items should show up as objectives
 /// </summary>
-public static class Configuration
+public static class ConfigurationManager
 {
     /// <summary>
     /// Whether or not the rusty lockbox should show up as an objective.
@@ -32,7 +34,5 @@ public static class Configuration
         LockboxVoidObjective = config.Bind<bool>("Objectives", "LockboxVoid", true, "Whether or not to show an objective for the encrusted cache");
         GoldChestObjective = config.Bind<bool>("Objectives", "GoldChest", true, "Whether or not to show an objective for the legendary chest");
         FreeChestObjective = config.Bind<bool>("Objectives", "FreeChest", true, "Whether or not to show an objective for the crashed multishop terminal");
-
     }
-
 }

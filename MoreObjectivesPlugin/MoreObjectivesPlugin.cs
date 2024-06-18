@@ -1,8 +1,8 @@
 ﻿using BepInEx;
-using BepInEx.Configuration;
 using R2API;
-using R2API.Utils;
+using R2API.Networking;
 using RoR2;
+using MoreObjectivesPlugin.Configuration;
 
 namespace MoreObjectivesPlugin;
 
@@ -21,6 +21,7 @@ public static class Global
 
 [BepInDependency("com.rune580.riskofoptions", BepInDependency.DependencyFlags.SoftDependency)]
 [BepInDependency(LanguageAPI.PluginGUID)]
+[BepInDependency(NetworkingAPI.PluginGUID)]
 [BepInPlugin(PluginGUID, PluginName, PluginVersion)]
 public class MoreObjectivesPlugin : BaseUnityPlugin
 {
@@ -53,22 +54,22 @@ public class MoreObjectivesPlugin : BaseUnityPlugin
     /// the configuration is changed.
     /// </summary>
     /// <param name="run">The RoR2 run</param>
-    public void OnRunStart(Run run)
+    private void OnRunStart(Run run)
     {
         Log.Info("Run started, registering objective trackers");
-        if(Configuration.LockboxObjective.Value)
+        if(ConfigurationManager.LockboxObjective.Value)
         {
             spawnInteractableManager.RegisterInteractable("iscLockbox", "LOCKBOX_OBJECTIVE");
         }
-        if(Configuration.LockboxVoidObjective.Value)
+        if(ConfigurationManager.LockboxVoidObjective.Value)
         {
             spawnInteractableManager.RegisterInteractable("iscLockboxVoid","LOCKBOX_VOID_OBJECTIVE");
         }
-        if(Configuration.FreeChestObjective.Value)
+        if(ConfigurationManager.FreeChestObjective.Value)
         {
             spawnInteractableManager.RegisterInteractable("iscFreeChest", "FREE_CHEST_OBJECTIVE");
         }
-        if(Configuration.GoldChestObjective.Value)
+        if(ConfigurationManager.GoldChestObjective.Value)
         {
             stageInteractableManager.RegisterInteractable("GoldChest", "GOLD_CHEST_OBJECTIVE");
         }
@@ -78,10 +79,10 @@ public class MoreObjectivesPlugin : BaseUnityPlugin
     {
         if(RiskOfOptionsWrapper.Enabled)
         {
-            RiskOfOptionsWrapper.AddBool(Configuration.LockboxObjective);
-            RiskOfOptionsWrapper.AddBool(Configuration.LockboxVoidObjective);
-            RiskOfOptionsWrapper.AddBool(Configuration.GoldChestObjective);
-            RiskOfOptionsWrapper.AddBool(Configuration.FreeChestObjective);
+            RiskOfOptionsWrapper.AddBool(ConfigurationManager.LockboxObjective);
+            RiskOfOptionsWrapper.AddBool(ConfigurationManager.LockboxVoidObjective);
+            RiskOfOptionsWrapper.AddBool(ConfigurationManager.GoldChestObjective);
+            RiskOfOptionsWrapper.AddBool(ConfigurationManager.FreeChestObjective);
         }
     }
 
