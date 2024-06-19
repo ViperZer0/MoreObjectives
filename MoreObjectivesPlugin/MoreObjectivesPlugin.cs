@@ -65,6 +65,8 @@ public class MoreObjectivesPlugin : BaseUnityPlugin
     private void RegisterOptionsWithManagers()
     {
         stageInteractableManager.RegisterInteractable("GoldChest", "GOLD_CHEST_OBJECTIVE", ConfigurationManager.GoldChestObjective);
+        stageInteractableManager.RegisterInteractable("Lockbox(Clone)", "LOCKBOX_OBJECTIVE", ConfigurationManager.LockboxObjective);
+        stageInteractableManager.RegisterInteractable("LockboxVoid(Clone)", "LOCKBOX_VOID_OBJECTIVE", ConfigurationManager.LockboxVoidObjective);
     }
 
     private SpawnInteractableManager spawnInteractableManager;
