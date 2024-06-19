@@ -29,7 +29,7 @@ public class InteractableObjectiveController: ScriptableObject, IInteractableObj
 
     public void Awake()
     {
-        Log.Info("InteractableObjectiveController awake!");
+        Log.Info("InteractableObjectiveController awake");
     }
 
     public void OnEnable()
@@ -52,6 +52,7 @@ public class InteractableObjectiveController: ScriptableObject, IInteractableObj
 
     public void AddInteractable(GameObject gameObject)
     {
+        Log.Debug("Adding interactable to InteractableObjectiveController");
         PurchaseInteraction interaction = gameObject.GetComponent<PurchaseInteraction>();
         if(interaction == null)
         {
@@ -78,6 +79,7 @@ public class InteractableObjectiveController: ScriptableObject, IInteractableObj
 
     private void OnPurchase(Interactor interactor)
     {
+        Log.Info("Tracked purchase interacted with!");
         interactablesActivated++;
     }
 

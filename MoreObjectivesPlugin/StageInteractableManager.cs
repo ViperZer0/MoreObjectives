@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using BepInEx.Configuration;
+using MoreObjectivesPlugin.Configuration;
 using RoR2;
 using UnityEngine;
 
@@ -16,20 +18,35 @@ public class StageInteractableManager: MonoBehaviour
 
     private struct RegisteredInteractable {
         public string objectiveToken;
+        public ConfigEntry<bool> objectiveConfiguration;
+
+        /// <summary>
+        /// Dynamically get the value of the configuration option associated
+        /// with this entry (via configurationEntryName)
+        /// </summary>
+        /// <returns>True if this objective should be tracked, false
+        /// otherwise</returns>
+        public bool GetConfigValue()
+        {
+            return objectiveConfiguration.Value;
+        }
     }
 
     // Maps string object names to the controller that monitors them.
     private Dictionary<string, InteractableObjectiveController> trackedInteractables = new();
 
-    public void RegisterInteractable(string gameobjectName, string objectiveToken)
+    public void RegisterInteractable(string gameobjectName, string objectiveToken, ConfigEntry<bool> objectiveConfiguration)
     {
+        Log.Debug($"Registering interactable {gameobjectName}");
         registeredInteractables.Add(gameobjectName, new RegisteredInteractable{
                 objectiveToken = objectiveToken,
+                objectiveConfiguration = objectiveConfiguration,
                 });
     }
 
     public void OnEnable()
     {
+        Log.Info("StageInteractableManager loaded");
         Stage.onStageStartGlobal += OnStageLoaded;
     }
 
@@ -46,6 +63,7 @@ public class StageInteractableManager: MonoBehaviour
         InteractableObjectiveController controller = trackedInteractables.ContainsKey(objectName) ? trackedInteractables[objectName] : ScriptableObject.CreateInstance<InteractableObjectiveController>();
         controller.AddInteractable(gameObject);
         controller.SetObjectiveToken(registeredInteractables[objectName].objectiveToken);
+        trackedInteractables[objectName] = controller;
     }
 
     /// <summary>
@@ -63,10 +81,19 @@ public class StageInteractableManager: MonoBehaviour
     /************EVENTS****************/
     private void OnStageLoaded(Stage stage)
     {
-        Log.Info("Resetting all tracked interactables");
+        Log.Info("StageInteractableManager: New stage, resetting all tracked interactables");
         ResetAllInteractables();
-        foreach(string objectName in registeredInteractables.Keys)
+        foreach(KeyValuePair<string, RegisteredInteractable> kvp in registeredInteractables)
         {
+            string objectName = kvp.Key;
+            RegisteredInteractable interactable = kvp.Value;
+            // Ignore objectives we are not tracking. The configuration can be
+            // changed mid-game, so between each stage we want to check to see
+            // if its' changed and we should stop tracking an objective.
+            if(!interactable.GetConfigValue())
+            {
+                break;
+            }
             // Note that GameObject.Find() will only ever return one object, so
             // any objectives generated should only ever have one tracked
             // interacatble. It's still recommended to include a _PLURAL

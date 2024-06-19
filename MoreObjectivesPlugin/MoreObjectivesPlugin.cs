@@ -3,6 +3,7 @@ using R2API;
 using R2API.Networking;
 using RoR2;
 using MoreObjectivesPlugin.Configuration;
+using R2API.Utils;
 
 namespace MoreObjectivesPlugin;
 
@@ -23,6 +24,7 @@ public static class Global
 [BepInDependency(LanguageAPI.PluginGUID)]
 [BepInDependency(NetworkingAPI.PluginGUID)]
 [BepInPlugin(PluginGUID, PluginName, PluginVersion)]
+[NetworkCompatibility(CompatibilityLevel.NoNeedForSync)]
 public class MoreObjectivesPlugin : BaseUnityPlugin
 {
     // The Plugin GUID should be a unique ID for this plugin,
@@ -44,35 +46,9 @@ public class MoreObjectivesPlugin : BaseUnityPlugin
         spawnInteractableManager = gameObject.AddComponent(typeof(SpawnInteractableManager)) as SpawnInteractableManager;
         stageInteractableManager = gameObject.AddComponent(typeof(StageInteractableManager)) as StageInteractableManager;
 
+        ConfigurationManager.Init(Config);
         RegisterOptionsMenu();    
-
-        RoR2.Run.onRunStartGlobal += OnRunStart;
-    }
-
-    /// <summary>
-    /// Register interactables to watch for only once the run starts, in case
-    /// the configuration is changed.
-    /// </summary>
-    /// <param name="run">The RoR2 run</param>
-    private void OnRunStart(Run run)
-    {
-        Log.Info("Run started, registering objective trackers");
-        if(ConfigurationManager.LockboxObjective.Value)
-        {
-            spawnInteractableManager.RegisterInteractable("iscLockbox", "LOCKBOX_OBJECTIVE");
-        }
-        if(ConfigurationManager.LockboxVoidObjective.Value)
-        {
-            spawnInteractableManager.RegisterInteractable("iscLockboxVoid","LOCKBOX_VOID_OBJECTIVE");
-        }
-        if(ConfigurationManager.FreeChestObjective.Value)
-        {
-            spawnInteractableManager.RegisterInteractable("iscFreeChest", "FREE_CHEST_OBJECTIVE");
-        }
-        if(ConfigurationManager.GoldChestObjective.Value)
-        {
-            stageInteractableManager.RegisterInteractable("GoldChest", "GOLD_CHEST_OBJECTIVE");
-        }
+        RegisterOptionsWithManagers();
     }
 
     private void RegisterOptionsMenu()
@@ -84,6 +60,11 @@ public class MoreObjectivesPlugin : BaseUnityPlugin
             RiskOfOptionsWrapper.AddBool(ConfigurationManager.GoldChestObjective);
             RiskOfOptionsWrapper.AddBool(ConfigurationManager.FreeChestObjective);
         }
+    }
+
+    private void RegisterOptionsWithManagers()
+    {
+        stageInteractableManager.RegisterInteractable("GoldChest", "GOLD_CHEST_OBJECTIVE", ConfigurationManager.GoldChestObjective);
     }
 
     private SpawnInteractableManager spawnInteractableManager;
