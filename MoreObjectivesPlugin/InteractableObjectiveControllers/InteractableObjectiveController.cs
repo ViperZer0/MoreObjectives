@@ -9,7 +9,7 @@ namespace MoreObjectivesPlugin;
 /// Monitors one or more interactable objects and generates an objective for
 /// them until the objects are all interacted with. 
 /// </summary>
-public class InteractableObjectiveController: ScriptableObject, IInteractableObjectiveController
+public class InteractableObjectiveController: MonoBehaviour, IInteractableObjectiveController
 {
     public int InteractablesActivated {
         get => interactablesActivated;
@@ -23,13 +23,9 @@ public class InteractableObjectiveController: ScriptableObject, IInteractableObj
         get => InteractablesActivated == TotalInteractables;
     }
 
-    public string ObjectiveToken {
-        get => objectiveToken;
-    }
-
     public void Awake()
     {
-        Log.Info("InteractableObjectiveController awake");
+        Log.Debug("InteractableObjectiveController awake");
     }
 
     public void OnEnable()
@@ -111,7 +107,7 @@ public class InteractableObjectiveController: ScriptableObject, IInteractableObj
             }
             else
             {
-                return Language.GetString(interactableObjectiveController.ObjectiveToken);
+                return Language.GetString(interactableObjectiveController.objectiveToken);
             }
         }
 

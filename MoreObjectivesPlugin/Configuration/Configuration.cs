@@ -35,4 +35,14 @@ public static class ConfigurationManager
         GoldChestObjective = config.Bind<bool>("Objectives", "GoldChest", true, "Whether or not to show an objective for the legendary chest");
         FreeChestObjective = config.Bind<bool>("Objectives", "FreeChest", true, "Whether or not to show an objective for the crashed multishop terminal");
     }
+
+    public static bool GetConfigValueByInteractableName(string interactableName)
+    {
+        if(interactableName == "iscLockbox") return LockboxObjective.Value;
+        if(interactableName == "iscLockboxVoid") return LockboxVoidObjective.Value;
+        if(interactableName == "iscFreeChest") return FreeChestObjective.Value;
+        if(interactableName == "GoldChest") return GoldChestObjective.Value;
+        Log.Warning($"No config value associated with the name {interactableName}");
+        return false;
+    }
 }

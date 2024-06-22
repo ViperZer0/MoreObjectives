@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace MoreObjectivesPlugin;
 
-public class MultishopInteractableObjectiveController: ScriptableObject, IInteractableObjectiveController
+public class MultishopInteractableObjectiveController: MonoBehaviour, IInteractableObjectiveController
 {
     public int InteractablesActivated {
         get => interactablesActivated;
