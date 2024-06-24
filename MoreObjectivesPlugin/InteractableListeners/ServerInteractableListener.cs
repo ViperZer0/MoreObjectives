@@ -19,10 +19,10 @@ public class ServerInteractableListener: NetworkBehaviour, IInteractableListener
             return;
         }
         Log.Debug("ServerInteractableListener loaded");
+        RegisterInteractableType("GoldChest", new RegisteredInteractableType{ objectiveToken = "GOLD_CHEST_OBJECTIVE"});
         RegisterInteractableType("iscLockbox", new RegisteredInteractableType{ objectiveToken = "LOCKBOX_OBJECTIVE"});
         RegisterInteractableType("iscLockboxVoid", new RegisteredInteractableType{ objectiveToken = "LOCKBOX_VOID_OBJECTIVE"});
         RegisterInteractableType("iscFreeChest", new RegisteredInteractableType{ objectiveToken = "FREE_CHEST_OBJECTIVE"});
-
     }
 
     public void OnEnable()
@@ -32,12 +32,14 @@ public class ServerInteractableListener: NetworkBehaviour, IInteractableListener
             return;
         }
         // These events only trigger server-side.
+        Log.Debug("Subscribing to stage initialization events");
         SceneDirector.onPrePopulateSceneServer += OnPrePopulateSceneServer;
         SpawnCard.onSpawnedServerGlobal += OnSpawnCardSpawned;
     }
 
     public void OnDisable()
     {
+        Log.Debug("Unsubscribing to scene initialization events");
         SceneDirector.onPrePopulateSceneServer -= OnPrePopulateSceneServer;
         SpawnCard.onSpawnedServerGlobal -= OnSpawnCardSpawned;
     }

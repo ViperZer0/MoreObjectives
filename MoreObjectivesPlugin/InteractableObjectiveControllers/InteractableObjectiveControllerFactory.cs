@@ -22,15 +22,7 @@ public static class InteractableObjectiveControllerFactory
         }
         else
         {
-            // Multishop terminals have to be handled differently.
-            if(interactableObject.TryGetComponent<MultiShopController>(out _))
-            {
-                return componentOwner.AddComponent<MultishopInteractableObjectiveController>();
-            }
-            else
-            {
-                return componentOwner.AddComponent<InteractableObjectiveController>();
-            }
+            return componentOwner.AddComponent<InteractableObjectiveController>();
         }
     }
 }

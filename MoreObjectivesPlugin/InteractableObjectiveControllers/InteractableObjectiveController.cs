@@ -2,8 +2,9 @@ using System.Collections.Generic;
 using RoR2;
 using RoR2.UI;
 using UnityEngine;
+using MoreObjectivesPlugin.InteractableEventWrappers;
 
-namespace MoreObjectivesPlugin;
+namespace MoreObjectivesPlugin.InteractableObjectiveControllers;
 
 /// <summary>
 /// Monitors one or more interactable objects and generates an objective for
@@ -23,41 +24,37 @@ public class InteractableObjectiveController: MonoBehaviour, IInteractableObject
         get => InteractablesActivated == TotalInteractables;
     }
 
-    public void Awake()
-    {
-        Log.Debug("InteractableObjectiveController awake");
-    }
-
     public void OnEnable()
     {
         //GlobalEventManager.OnInteractionsGlobal += OnGlobalInteraction;
         ObjectivePanelController.collectObjectiveSources += OnCollectObjectiveSources;
+        InteractableEventWrapperManager manager = gameObject.GetComponent<InteractableEventWrapperManager>();
+        if(manager == null)
+        {
+            Log.Error("Couldn't find InteractableEventWrapperManager in InteractableObjectiveController");
+            return;
+        }
+        eventWrapperManager = manager;
     }
 
     public void Destroy()
     {
-        Log.Info("Destroying InteractableObjectiveController");
-        //GlobalEventManager.OnInteractionsGlobal -= OnGlobalInteraction;
         ObjectivePanelController.collectObjectiveSources -= OnCollectObjectiveSources;
-        foreach(PurchaseInteraction interaction in interactables)
+        foreach(IInteractableEventWrapper eventWrapper in eventWrappers)
         {
-            interaction.onPurchase.RemoveListener(OnPurchase);
+            eventWrapper.EventInteractableInteractedWith -= OnPurchase;
+            eventWrapperManager.RemoveEventWrapper(eventWrapper);
         }
-        Destroy(this);
+        eventWrappers = new();
     }
 
     public void AddInteractable(GameObject gameObject)
     {
         Log.Debug("Adding interactable to InteractableObjectiveController");
-        PurchaseInteraction interaction = gameObject.GetComponent<PurchaseInteraction>();
-        if(interaction == null)
-        {
-            Log.Error($"Couldn't get PurchaseInteraction component of GameObject {interaction}");
-            return;
-        }
+        IInteractableEventWrapper interactableWrapper = eventWrapperManager.TrackInteractable(gameObject);
         totalInteractables++;
-        interactables.Add(interaction);
-        interaction.onPurchase.AddListener(OnPurchase);
+        interactableWrapper.EventInteractableInteractedWith += OnPurchase;
+        eventWrappers.Add(interactableWrapper);
     }
 
     /// <summary>
@@ -73,10 +70,15 @@ public class InteractableObjectiveController: MonoBehaviour, IInteractableObject
         }
     }
 
-    private void OnPurchase(Interactor interactor)
+    private void OnPurchase(object sender, InteractableEventWrappers.InteractableInteractedWithArgs args)
     {
-        Log.Info("Tracked purchase interacted with!");
-        interactablesActivated++;
+        if(sender is IInteractableEventWrapper eventWrapper)
+        {
+            Log.Info("Tracked purchase interacted with!");
+            interactablesActivated++;
+            eventWrapper.EventInteractableInteractedWith -= OnPurchase;
+            eventWrappers.Remove(eventWrapper);
+        }
     }
 
     private void OnCollectObjectiveSources(CharacterMaster master, List<ObjectivePanelController.ObjectiveSourceDescriptor> objectiveSourcesList)
@@ -120,6 +122,7 @@ public class InteractableObjectiveController: MonoBehaviour, IInteractableObject
     /****STATE*****/
     private int interactablesActivated = 0;
     private int totalInteractables = 0;
-    private List<PurchaseInteraction> interactables = new();
     private string objectiveToken;
+    private List<IInteractableEventWrapper> eventWrappers = new();
+    private InteractableEventWrapperManager eventWrapperManager;
 }

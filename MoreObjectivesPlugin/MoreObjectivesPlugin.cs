@@ -5,6 +5,10 @@ using MoreObjectivesPlugin.Configuration;
 using R2API.Utils;
 using MoreObjectivesPlugin.Networking;
 using MoreObjectivesPlugin.InteractableListeners;
+using MoreObjectivesPlugin.InteractableEventWrappers;
+using UnityEngine;
+using UnityEngine.Networking;
+using RoR2;
 
 namespace MoreObjectivesPlugin;
 
@@ -43,19 +47,30 @@ public class MoreObjectivesPlugin : BaseUnityPlugin
     {
         Log.Init(Logger);
         Log.Info("MoreObjectives loaded!");
-        // Probably should load this before doing anything else.
-        networkCheck = gameObject.AddComponent<NetworkCheck>();
+
         // Register configuration.
         ConfigurationManager.Init(Config);
         RegisterOptionsMenu();
-    
-        interactableListener = InteractableListenerFactory.CreateInteractableListener(gameObject);
-        objectiveTracker = gameObject.AddComponent<ObjectiveTracker>();
+        
+        // Delay most plugin initialization until the run starts, so we know the
+        // full network conditions we are running in.
+        Run.onRunStartGlobal += OnRunStart;
     }
 
-    public IInteractableListener InteractableListener
-    {
-        get => interactableListener;
+    private void OnRunStart(Run run){
+         // Spawn a new GameObject for plugin stuff.
+        GameObject pluginObject = new GameObject("MoreObjectives");
+        DontDestroyOnLoad(pluginObject);
+        pluginObject.AddComponent<NetworkIdentity>();
+        if(NetworkServer.active)
+        {
+            Log.Debug("Spawning MoreObjectives plugin object");
+            NetworkServer.Spawn(pluginObject);
+        } 
+        // We have to spawn the plugin object before we check network conditions
+        // and instantiate everything else.
+        pluginObject.AddComponent<NetworkCheck>();
+        pluginObject.AddComponent<MoreObjectivesBootstrap>();
     }
 
     private void RegisterOptionsMenu()
@@ -69,7 +84,5 @@ public class MoreObjectivesPlugin : BaseUnityPlugin
         }
     }
 
-    NetworkCheck networkCheck;
-    IInteractableListener interactableListener;
-    ObjectiveTracker objectiveTracker;
+    private GameObject pluginObject;
 }

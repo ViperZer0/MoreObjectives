@@ -33,16 +33,19 @@ public class NetworkCheck: NetworkBehaviour
         }
     }
 
-    public void Awake()
+    public void OnEnable()
     {
+        Log.Debug("OnEnable called");
         if(isServer)
         {
             Log.Info("Running on server detected");
             serverExists = true;
+            return;
         }
         // Only set to false if it hasn't been set before (i.e by server)
         if(!serverExists.HasValue)
         {
+            Log.Info("Server hasn't been detected yet. This doesn't mean there is no server, it may just mean the server hasn't loaded yet.");
             serverExists = false;
         }
     }
