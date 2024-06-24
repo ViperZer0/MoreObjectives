@@ -3,12 +3,10 @@ using R2API;
 using R2API.Networking;
 using MoreObjectivesPlugin.Configuration;
 using R2API.Utils;
-using MoreObjectivesPlugin.Networking;
-using MoreObjectivesPlugin.InteractableListeners;
-using MoreObjectivesPlugin.InteractableEventWrappers;
 using UnityEngine;
 using UnityEngine.Networking;
 using RoR2;
+using MoreObjectivesPlugin.Networking;
 
 namespace MoreObjectivesPlugin;
 
@@ -52,25 +50,25 @@ public class MoreObjectivesPlugin : BaseUnityPlugin
         ConfigurationManager.Init(Config);
         RegisterOptionsMenu();
         
+        spawnManager = gameObject.AddComponent<MoreObjectivesSpawnManager>();
+        // Spawn plugin locally, with network stuff disabled.
+        // If we end up having server-side functionality, we'll respawn the
+        // plugin with network stuff enabled.
+        spawnManager.SpawnPluginLocal();
         // Delay most plugin initialization until the run starts, so we know the
         // full network conditions we are running in.
         Run.onRunStartGlobal += OnRunStart;
     }
 
-    private void OnRunStart(Run run){
-         // Spawn a new GameObject for plugin stuff.
-        GameObject pluginObject = new GameObject("MoreObjectives");
-        DontDestroyOnLoad(pluginObject);
-        pluginObject.AddComponent<NetworkIdentity>();
+    private void OnRunStart(Run run)
+    {
+        // Only server should spawn the plugin object on all connected clients.
         if(NetworkServer.active)
         {
-            Log.Debug("Spawning MoreObjectives plugin object");
-            NetworkServer.Spawn(pluginObject);
+            // Spawn a new GameObject for plugin stuff.
+            GameObject pluginObject = spawnManager.SpawnPlugin(Vector3.zero, spawnManager.PluginAssetId);
+            NetworkServer.Spawn(pluginObject, spawnManager.PluginAssetId);
         } 
-        // We have to spawn the plugin object before we check network conditions
-        // and instantiate everything else.
-        pluginObject.AddComponent<NetworkCheck>();
-        pluginObject.AddComponent<MoreObjectivesBootstrap>();
     }
 
     private void RegisterOptionsMenu()
@@ -84,5 +82,5 @@ public class MoreObjectivesPlugin : BaseUnityPlugin
         }
     }
 
-    private GameObject pluginObject;
+    private MoreObjectivesSpawnManager spawnManager;
 }

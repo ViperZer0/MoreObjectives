@@ -7,7 +7,7 @@ namespace MoreObjectivesPlugin;
 
 public class MoreObjectivesBootstrap: MonoBehaviour
 {
-    public void Start()
+    public void Awake()
     {
         InteractableListenerFactory.CreateInteractableListener(gameObject);
         gameObject.AddComponent<ObjectiveTracker>();

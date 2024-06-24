@@ -36,6 +36,7 @@ public class NoOpInteractableObjectiveController : MonoBehaviour, IInteractableO
 
     public void SetObjectiveToken(string objectiveToken)
     {
+        Log.Debug($"Setting objective token: {objectiveToken}");
         if(this.objectiveToken == null)
         {
             this.objectiveToken = objectiveToken;
@@ -47,7 +48,7 @@ public class NoOpInteractableObjectiveController : MonoBehaviour, IInteractableO
         objectiveSourcesList.Add(new ObjectivePanelController.ObjectiveSourceDescriptor
                 {
                     source = this,
-                    objectiveType = typeof(NoOpInteractableObjectiveController),
+                    objectiveType = typeof(NoOpInteractableObjectiveTracker),
                     master = master
                 });
     }

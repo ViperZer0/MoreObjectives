@@ -33,9 +33,10 @@ public class NetworkCheck: NetworkBehaviour
         }
     }
 
-    public void OnEnable()
+    public void Start()
     {
-        Log.Debug("OnEnable called");
+        Log.Debug("Start called");
+        Log.Debug($"NetId: {netId}");
         if(isServer)
         {
             Log.Info("Running on server detected");
@@ -48,6 +49,11 @@ public class NetworkCheck: NetworkBehaviour
             Log.Info("Server hasn't been detected yet. This doesn't mean there is no server, it may just mean the server hasn't loaded yet.");
             serverExists = false;
         }
+    }
+
+    public static void SetServerExistence(bool serverExists)
+    {
+        NetworkCheck.serverExists = serverExists;
     }
 }
 

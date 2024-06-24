@@ -38,9 +38,9 @@ public static class ConfigurationManager
 
     public static bool GetConfigValueByInteractableName(string interactableName)
     {
-        if(interactableName == "iscLockbox") return LockboxObjective.Value;
-        if(interactableName == "iscLockboxVoid") return LockboxVoidObjective.Value;
-        if(interactableName == "iscFreeChest") return FreeChestObjective.Value;
+        if(interactableName == "iscLockbox" || interactableName == "Lockbox(Clone)") return LockboxObjective.Value;
+        if(interactableName == "iscLockboxVoid" || interactableName == "LockboxVoid(Clone)") return LockboxVoidObjective.Value;
+        if(interactableName == "iscFreeChest" || interactableName == "FreeChest(Clone)") return FreeChestObjective.Value;
         if(interactableName == "GoldChest") return GoldChestObjective.Value;
         Log.Warning($"No config value associated with the name {interactableName}");
         return false;

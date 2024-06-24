@@ -16,6 +16,7 @@ public class ServerInteractableListener: NetworkBehaviour, IInteractableListener
     {
         if(!isServer)
         {
+            Log.Info("Running on client, not registering interactables.");
             return;
         }
         Log.Debug("ServerInteractableListener loaded");
@@ -74,6 +75,7 @@ public class ServerInteractableListener: NetworkBehaviour, IInteractableListener
         GameObject foundGoldChest = GameObject.Find("GoldChest");
         if(foundGoldChest != null)
         {
+            Log.Debug("Firing EventInteractableAdded");
             EventInteractableAdded?.Invoke(this, new InteractableAddedEventArgs("GoldChest", foundGoldChest));
         }
     }

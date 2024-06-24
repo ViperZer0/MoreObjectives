@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.Networking;
 
 namespace MoreObjectivesPlugin.InteractableListeners;
 
